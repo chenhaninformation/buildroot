@@ -1,0 +1,32 @@
+# This defconfig file is based on tag '2018.11'
+
+# Target options -->
+#   Target Architecture -->
+#     AArch64 (little endian)
+BR2_aarch64=y
+
+# Build options -->
+#   Enable compiler cache
+BR2_CCACHE=y
+
+# Toolchain -->
+#   Binutils Version -->
+#      binutils 2.31.1
+BR2_BINUTILS_VERSION_2_31_X=y
+#   GCC compiler Version -->
+#     gcc 8.x
+BR2_GCC_VERSION_8_X=y
+
+# System configuration -->
+#   Root filesystem overlay directories
+BR2_ROOTFS_OVERLAY="${TOPDIR}/board/chenhan/espressobin_ramfs/overlay"
+
+# Filesystem images -->
+#   cpio the root filesystem (for use as an initial RAM filesystem)
+BR2_TARGET_ROOTFS_CPIO=y
+#     Compression method -->
+#       xz
+BR2_TARGET_ROOTFS_CPIO_XZ=y
+#   tar the root filesystem
+BR2_TARGET_ROOTFS_TAR=n
+

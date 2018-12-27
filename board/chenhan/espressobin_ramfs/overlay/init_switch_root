@@ -1,0 +1,78 @@
+#!/bin/sh
+#
+# SPDX-License-Identifier: GPL-3.0
+#
+# Copyright (C) 2018 Hunan CHenHan Information Technology Co., Ltd.
+# Copyright (C) 2018 Ding Tao <miyatsu@qq.com>
+#
+# This script will using given devices to mount an OverlayFS as "real" rootfs
+# and will NOT return to the caller forever.
+#
+# This script will create two directories name after the device basename, just
+# before switch_root. We use read write device to store both upper and work
+# directory, to distinguish two direcotry and avoid some unknow behaviours.
+#
+# The final mount list will be as follow:
+# /dev/mmcblk0p2 on /mmcblk0p2 type ext4 (ro,...)
+# /dev/mmcblk0p3 on /mmcblk0p3 type ext4 (rw,...)
+# overlay on /overlay type overlay (rw,lowerdir=/mmcblk0p2, \
+#	upperdir=/mmcblk0p3/upper,workdir=/mmcblk0p3/work)
+#
+# If there is any thing gose wrong, this script will NOT attempt to recover
+# from the error state, which will resulting in kernel panic.
+#
+# Usage: init_switch_root </dev/ro> </dev/rw>
+#
+#            </dev/ro> is the read only device, must not be mounted
+#            </dev/rw> is the read write device, must not be mounted
+# e.g. exec init_switch_root /dev/mmcblk0p2 /dev/mmcblk0p3
+#
+
+upper_dir_name=upper
+work_dir_name=work
+overlay_dir_name=overlay
+
+ro_dev=${1}
+rw_dev=${2}
+
+ro_dev_basename=`basename ${ro_dev}`
+rw_dev_basename=`basename ${rw_dev}`
+
+lower_dir=/${ro_dev_basename}
+upper_dir=/${rw_dev_basename}/${upper_dir_name}
+work_dir=/${rw_dev_basename}/${work_dir_name}
+overlay_dir=/${overlay_dir_name}
+
+echo "log: ramfs: ${0}: Waiting for mmc to be probe ..."
+while [ ! -e ${ro_dev} ] || [ ! -e ${rw_dev} ]
+do
+	# Do nothing, just wait mmc to be probe by sysfs
+	:
+done
+
+echo "log: ramfs: ${0}: Mounting lower directory ..."
+mkdir -p ${lower_dir}
+mount -o ro ${ro_dev} ${lower_dir}
+
+echo "log: ramfs: ${0}: Mounting upper(work) directory ..."
+mkdir /${rw_dev_basename}
+mount -o rw ${rw_dev} /${rw_dev_basename}
+
+echo "log: ramfs: ${0}: Making upper and work directory ..."
+if [ ! -e ${upper_dir} ]
+then
+	mkdir -p ${upper_dir}
+fi
+
+if [ ! -e ${work_dir} ]
+then
+	mkdir -p ${work_dir}
+fi
+
+echo "log: ramfs: ${0}: Mounting overlayfs ..."
+mkdir -p ${overlay_dir}
+mount -t overlay overlay -o lowerdir=${lower_dir},upperdir=${upper_dir},workdir=${work_dir} ${overlay_dir}
+
+echo "log: ramfs: ${0}: Start to switch root ..."
+exec switch_root ${overlay_dir} /sbin/init
+

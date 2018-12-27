@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# SPDX-License-Identifier: GPL-3.0
+#
+# Copyright (C) 2018 Hunan CHenHan Information Technology Co., Ltd.
+# Copyright (C) 2018 Ding Tao <miyatsu@qq.com>
+#
+# This script will using given devices to mount an OverlayFS as "real" rootfs
+# and will NOT return to the caller forever.
+#
+# This script will create two directories name after the device basename, just
+# before switch_root. We use read write device to store both upper and work
+# directory, to distinguish two direcotry and avoid some unknow behaviours.
+#
+# The final mount list will be as follow:
+# /dev/mmcblk0p2 on /mmcblk0p2 type ext4 (ro,...)
+# /dev/mmcblk0p3 on /mmcblk0p3 type ext4 (rw,...)
+# overlay on /overlay type overlay (rw,lowerdir=/mmcblk0p2, \
+#	upperdir=/mmcblk0p3/upper,workdir=/mmcblk0p3/work)
+#
+# If there is any thing gose wrong, this script will NOT attempt to recover
+# from the error state, which will resulting in kernel panic.
+#
+# Usage: init_switch_root </dev/ro> </dev/rw>
+#
+#            </dev/ro> is the read only device, must not be mounted
+#            </dev/rw> is the read write device, must not be mounted
+# e.g. exec init_switch_root /dev/mmcblk0p2 /dev/mmcblk0p3
+#
+
+rw_dev=${1}
+
+rw_dev_basename=`basename ${rw_dev}`
+
+echo "log: ramfs: ${0}: Waiting for mmc to be probe ..."
+while [ ! -e ${rw_dev} ]
+do
+	# Do nothing, just wait mmc to be probe by sysfs
+	:
+done
+
+echo "log: ramfs: ${0}: Mounting upper(work) device ..."
+mkdir /${rw_dev_basename}
+mount -o rw ${rw_dev} /${rw_dev_basename}
+
+echo "log: ramfs: ${0}: Removing upper(work) direcotry ..."
+rm -rf /${rw_dev_basename}/*
+
+echo "log: ramfs: ${0}: Unmount upper(work) directory ..."
+umount /${rw_dev_basename}
+
+echo "log: ramfs: ${0}: Removing empty directory ..."
+rmdir /${rw_dev_basename}

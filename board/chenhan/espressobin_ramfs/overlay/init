@@ -1,0 +1,22 @@
+#!/bin/sh
+# devtmpfs does not get automounted for initramfs
+/bin/mount -t devtmpfs devtmpfs /dev
+exec 0</dev/console
+exec 1>/dev/console
+exec 2>/dev/console
+
+echo "Mount /proc and /sys ..."
+/bin/mount -t proc proc /proc
+/bin/mount -t sysfs sysfs /sys
+
+echo "Fill /dev with device files ..."
+/sbin/mdev -s
+
+exec /init_switch_root /dev/mmcblk0p2 /dev/mmcblk0p3
+
+echo "Never reached!"
+echo "Spinning to avoid kernel panic ..."
+sleep 999h
+
+exec /sbin/init "$@"
+
