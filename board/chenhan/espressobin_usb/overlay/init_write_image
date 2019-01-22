@@ -1,0 +1,183 @@
+#!/bin/sh
+#
+# SPDX-License-Identifier: GPL-3.0
+#
+# Copyright (C) 2019 Hunan ChenHan Information Technology Co., Ltd.
+#
+# @author Ding Tao <i@dingtao.org>
+#
+# @brief This script is to write two images into our board, and this script
+#	 will running within a USB sticks. Default we assume the /dev/mmcblk0
+#	 is the target flash device.
+
+dev=/dev/mmcblk0
+
+image1_name=image1.tar
+image2_name=image2.tar
+
+echo_error () {
+	echo ${1}
+	sleep 99999
+	echo "Error, please reboot and retry."
+	poweroff
+}
+
+# Make new partition table for SD/eMMC
+build_partition () {
+	echo "Start to make partitions for SD/eMMC..."
+
+	# Note the use of ‘--’, to prevent the following ‘-1s’ last-sector
+	# indicator from being interpreted as an invalid command-line option.
+
+	parted -s ${dev} -- mklabel gpt
+	if [ $? -ne 0 ]
+	then
+		echo_error "ERROR: parted -s ${dev} mklabel gpt"
+	fi
+
+	parted -s ${dev} -- mkpart primary 1M 300M
+	if [ $? -ne 0 ]
+	then
+		echo_error "ERROR: parted -s ${dev} mkpart primary 1M 300M"
+	fi
+
+	parted -s ${dev} -- mkpart primary 300M 1G
+	if [ $? -ne 0 ]
+	then
+		echo_error "ERROR: parted -s ${dev} mkpart primary 300M 1G"
+	fi
+
+	parted -s ${dev} -- mkpart primary 1G -1M
+	if [ $? -ne 0 ]
+	then
+		echo_error "ERROR: parted -s ${dev} mkpart primary 1G -1M"
+	fi
+
+	echo "Make partitions done!"
+}
+
+# Make new filesystem
+build_filesystem () {
+	echo "Start to make file system for SD/eMMC..."
+
+	mke2fs -F -t ext4 ${dev}p1
+	if [ $? -ne 0 ]
+	then
+		echo_error "ERROR: mke2fs -F -t ext4 ${dev}p1"
+	fi
+
+	mke2fs -F -t ext4 ${dev}p2
+	if [ $? -ne 0 ]
+	then
+		echo_error "ERROR: mke2fs -F -t ext4 ${dev}p2"
+	fi
+
+	mke2fs -F -t ext4 ${dev}p3
+	if [ $? -ne 0 ]
+	then
+		echo_error "ERROR: mke2fs -F -t ext4 ${dev}p3"
+	fi
+
+	echo "Make file system done!"
+}
+
+# Mount USB
+build_mount_usb () {
+	echo "Mounting USB..."
+
+	mkdir /usb
+	mount /dev/sda1 /usb
+	if [ $? -eq 0 ]
+	then
+		# Mount error dosn't says we have access issue
+		if [ ! -e /usb/${image2_name} ]
+		then
+			echo "ERROR: mount /dev/sda1 /usb!"
+			echo_error "ERRPR: No ${image2_name} file found!"
+		fi
+	fi
+
+	echo "Mount USB done!"
+}
+
+# Write rescue image
+build_write_image1() {
+	echo "Start to write image1..."
+
+	mkdir /mmc1
+	mount ${dev}p1 /mmc1
+	if [ $? -ne 0 ]
+	then
+		echo_error "ERROR: mount ${dev}p1 /mmc1"
+	fi
+
+	cd /mmc1
+	tar xvf /usb/${image1_name}
+	if [ $? -ne 0 ]
+	then
+		echo_error "ERROR: tar xvf /usb/${image1_name}"
+	fi
+
+	cd /
+	umount /mmc1
+	rmdir /mmc1
+
+	echo "Write image1 done!"
+}
+
+# Write normal image
+build_write_image2() {
+	echo "Start to write image2..."
+
+	mkdir /mmc2
+	mount ${dev}p2 /mmc2
+	if [ $? -ne 0 ]
+	then
+		echo_error "ERROR: mount ${dev}p2 /mmc2"
+	fi
+
+	cd /mmc2
+	tar xvf /usb/${image2_name}
+	if [ $? -ne 0 ]
+	then
+		echo_error "ERROR: tar xvf /usb/${image2_name}"
+	fi
+
+	cd /
+	umount /mmc2
+	rmdir mmc2
+
+	echo "Write image2 done!"
+}
+
+# Unmount USB
+build_unmount_usb () {
+	echo "Start to umounting USB..."
+
+	umount /usb
+	rmdir /usb
+
+	echo "Umount USB done!"
+}
+
+
+if [ ! -e ${dev} ]
+then
+	echo_error "ERROR: Device ${dev} not find!"
+fi
+
+echo "Start to recovery..."
+
+build_partition
+build_filesystem
+build_mount_usb
+build_write_image1
+build_write_image2
+build_unmount_usb
+
+echo "Recovery done!"
+echo "Now you can safily remove USB and restart the machine!"
+
+sleep 999
+poweroff
+

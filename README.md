@@ -41,6 +41,25 @@ ESPRESSObin rescue
 The rescue image used in ESPRESSObin is reserved for rescue the firmware or do
 some system upgrade job. Still on going...
 
+ESPRESSObin USB rescue
+----------------------
+
+The USB rescue image used in ESPRESSObin is to generate an image which running
+on a USB stick, and this image is response for rebuild any thing on board
+SD/eMMC card include **mke2fs** and **parted**. If a system is completely
+destroyed and have no way to upload image from **ESPRESSObin rescue mode**.
+This USB rescue will take care of it.
+
+Defconfig: configs/espressobin\_usb\_defconfig
+Overlay: board/chenhan/espressobin\_usb/
+
+Same as ESPRESSObin ramfs, ESPRESSObin USB rescue also compile as [CPIO][CPIO]
+file and you should append this [CPIO][CPIO] file when build Linux kernel.
+
+**Note**: To build USB rescue image, you may need **texinfo** package
+(required by target package **parted**) installed in your host machine before
+build this image.
+
 TODO
 ====
 
