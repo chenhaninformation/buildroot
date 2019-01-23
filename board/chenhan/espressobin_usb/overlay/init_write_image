@@ -112,7 +112,7 @@ build_write_image1() {
 	fi
 
 	cd /mmc1
-	xz -dc ${image1_name} | tar xv
+	xz -dc /usb/${image1_name} | tar xv
 	if [ $? -ne 0 ]
 	then
 		echo_error "ERROR: xz -dc ${image1_name} | tar xv"
@@ -137,7 +137,7 @@ build_write_image2() {
 	fi
 
 	cd /mmc2
-	xz -dc ${image2_name} | tar xv
+	xz -dc /usb/${image2_name} | tar xv
 	if [ $? -ne 0 ]
 	then
 		echo_error "ERROR: xz -dc ${image2_name} | tar xv"
