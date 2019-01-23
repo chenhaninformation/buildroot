@@ -17,8 +17,8 @@ image2_name=image2.tar.xz
 
 echo_error () {
 	echo ${1}
-	sleep 99999
 	echo "Error, please reboot and retry."
+	sleep 99999
 	poweroff
 }
 
@@ -38,13 +38,13 @@ build_partition () {
 	parted -s ${dev} -- mkpart primary 1M 300M
 	if [ $? -ne 0 ]
 	then
-		echo_error "ERROR: parted -s ${dev} mkpart primary 1M 300M"
+		echo_error "ERROR: parted -s ${dev} mkpart primary 1M 400M"
 	fi
 
 	parted -s ${dev} -- mkpart primary 300M 1G
 	if [ $? -ne 0 ]
 	then
-		echo_error "ERROR: parted -s ${dev} mkpart primary 300M 1G"
+		echo_error "ERROR: parted -s ${dev} mkpart primary 400M 1G"
 	fi
 
 	parted -s ${dev} -- mkpart primary 1G -1M
