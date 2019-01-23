@@ -1,0 +1,52 @@
+# This defconfig file is based on tag '2018.11'
+
+# Target options -->
+#   Target Architecture -->
+#     AArch64 (little endian)
+BR2_aarch64=y
+
+# Build options -->
+#   Enable compiler cache
+BR2_CCACHE=y
+
+# Toolchain -->
+#   C library -->
+#     glibc
+BR2_TOOLCHAIN_BUILDROOT_GLIBC=y
+#   Enable WCHAR support
+BR2_TOOLCHAIN_BUILDROOT_WCHAR=y
+#   Binutils Version -->
+#      binutils 2.31.1
+BR2_BINUTILS_VERSION_2_31_X=y
+#   GCC compiler Version -->
+#     gcc 8.x
+BR2_GCC_VERSION_8_X=y
+
+# System configuration -->
+#   Root filesystem overlay directories
+BR2_ROOTFS_OVERLAY="${TOPDIR}/board/chenhan/espressobin_usb/overlay"
+
+# Target packages -->
+#   Compressors and decompressors -->
+#     xz-utils
+BR2_PACKAGE_XZ=y
+#   Filesystem and flash utilities -->
+#     e2fsprogs
+BR2_PACKAGE_E2FSPROGS=y
+#   Hardware handling -->
+#     parted
+BR2_PACKAGE_PARTED=y
+#   Libraries -->
+#     Text and terminal handling -->
+#       libiconv
+BR2_PACKAGE_LIBICONV=y
+
+# Filesystem images -->
+#   cpio the root filesystem (for use as an initial RAM filesystem)
+BR2_TARGET_ROOTFS_CPIO=y
+#     Compression method -->
+#       xz
+BR2_TARGET_ROOTFS_CPIO_XZ=y
+#   tar the root filesystem
+BR2_TARGET_ROOTFS_TAR=n
+

@@ -12,8 +12,8 @@
 
 dev=/dev/mmcblk0
 
-image1_name=image1.tar
-image2_name=image2.tar
+image1_name=image1.tar.xz
+image2_name=image2.tar.xz
 
 echo_error () {
 	echo ${1}
@@ -112,10 +112,10 @@ build_write_image1() {
 	fi
 
 	cd /mmc1
-	tar xvf /usb/${image1_name}
+	xz -dc ${image1_name} | tar xv
 	if [ $? -ne 0 ]
 	then
-		echo_error "ERROR: tar xvf /usb/${image1_name}"
+		echo_error "ERROR: xz -dc ${image1_name} | tar xv"
 	fi
 
 	cd /
@@ -137,10 +137,10 @@ build_write_image2() {
 	fi
 
 	cd /mmc2
-	tar xvf /usb/${image2_name}
+	xz -dc ${image2_name} | tar xv
 	if [ $? -ne 0 ]
 	then
-		echo_error "ERROR: tar xvf /usb/${image2_name}"
+		echo_error "ERROR: xz -dc ${image2_name} | tar xv"
 	fi
 
 	cd /
